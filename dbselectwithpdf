@@ -1,0 +1,73 @@
+<?php 	define("DB_HOST", 'localhost');
+		define('DB_USER', 'root');
+		define('DB_PASS', '');
+		define('DB_DATABASE','learn');
+   $conn = mysqli_connect(DB_HOST,DB_USER,DB_PASS,DB_DATABASE) or die('could not connect db');
+   $stmt = $conn->prepare("SELECT username, password, email FROM users");
+   $stmt -> execute();
+
+   //$stmt = $conn->prepare("SELECT page_id,page_title,content from tbl_page");
+   //$stmt -> execute();  
+   $stmt->store_result();
+   $stmt ->bind_result($page,$title,$content);
+   $filename = "pdf/h2p.html";
+
+    //Start - creating HTML - Header.
+    
+    function expl($str) {
+				$str = explode(".", $str);
+				$decimal = substr($str[1], 0, 2);
+				return $str[0].'.'.$decimal;
+			}
+   if($stmt->num_rows > 0)
+   {
+
+$createhtml .="<html><head><style type=\"text/css\">
+th{
+  background-color: red;
+  color:white;
+}
+td{
+  background-color: #696759;
+  color:white;
+}</head><body>
+			<table border=\"2\" padding=\"2\">
+			<thead>
+			<th>Page ID</th>
+			<th>Title</th>
+			<th>content</th>
+		</thead><tbody>";
+		  while($stmt->fetch())
+   { 
+$createhtml .="<tr><td>$page</td>
+			<td>$title</td>
+			<td>$content</td></tr>";
+	
+	 }
+	}
+$createhtml .=	"</tbody></table></body></html>";
+ $change2html = str_replace('\"', '"', $createhtml);
+    
+    //Updating the Details in HTML File
+    $fileopen = fopen($filename,"w+") or die("Please Check the File.It's not Exists in the Path.");
+    fwrite($fileopen,$change2html);
+    fclose($fileopen);
+    
+    //Creating Pdf using the html file
+    require("pdf/html2fpdf.php"); 
+    $htmlFile = "pdf/h2p.html"; //Filename
+    $buffer = file_get_contents($htmlFile); 
+    $pdf = new HTML2FPDF('P', 'mm', 'Legal');
+    $filePath = 'save/users';
+    //$pdf->Set('Times','B',14);
+    $pdf->AddPage(); 
+    //$pdf->SetFont('Arial', '', 8);    
+    $pdf->WriteHTML($buffer); 
+    $pdf->Output($filePath.'/save.pdf', 'F'); //output Pdf file. file name
+  	
+  	//header("Location: save.pdf");
+ 	 header('Content-Type: application/pdf');
+    header('Content-disposition: attachment;filename=save/users/save.pdf');
+    readfile('save/users/save.pdf');
+
+?>
